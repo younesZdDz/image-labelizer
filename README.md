@@ -6,4 +6,4 @@ For a example of similar api: [Scale AI](https://scale.com/)
 ![demo](screens/demo.png)
 
 ## Dashboard API
-[Ceck out the API]()
+[Ceck out the API.](https://github.com/younesZdDz/image-labelizer-api)
