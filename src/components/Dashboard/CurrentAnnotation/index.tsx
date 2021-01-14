@@ -7,8 +7,10 @@ import Grid from '@material-ui/core/Grid';
 import axios from 'axios';
 import { DispatchContext, AnnotationsContext } from '../../../contexts/annotations.context';
 import { AnnotationType } from '../../../types';
-import config from '../../../config';
 import { Box } from '@material-ui/core';
+import { DateTime } from 'luxon';
+import config from '../../../config';
+import { AuthContext, SetAuthContext } from '../../../contexts/auth.context';
 
 type Props = {
     currentAnnotation: AnnotationType | undefined;
@@ -17,6 +19,9 @@ type Props = {
 };
 
 const CurrentAnnotation: React.FC<Props> = ({ currentAnnotation, onChange, entries }) => {
+    const authState = useContext(AuthContext);
+    const dispatchAuth = useContext(SetAuthContext);
+
     const dispatch = useContext(DispatchContext);
     const annotationsState = useContext(AnnotationsContext);
     const [comment, setComment] = useState('');
@@ -24,10 +29,58 @@ const CurrentAnnotation: React.FC<Props> = ({ currentAnnotation, onChange, entri
         setComment(e.target.value);
     };
     const handleSubmit = async () => {
-        await axios.put(`${config.API_URI}/api/v1/annotation/${currentAnnotation?._id}`, {
-            annotations: entries,
-            comment,
-        });
+        if (authState?.refreshToken && authState?.refreshExpiresIn - DateTime.local().toSeconds() < 0) {
+            await axios.put(
+                `${config.API_URI}/api/v1/auth/logout`,
+                {
+                    refreshToken: authState.refreshToken,
+                },
+                {
+                    headers: {
+                        authorization: authState.accessToken,
+                    },
+                },
+            );
+
+            dispatchAuth &&
+                dispatchAuth({
+                    type: 'RESET',
+                });
+        } else if (authState?.accessToken && authState?.accessExpiresIn - DateTime.local().toSeconds() < 0) {
+            const res = await axios.put(
+                `${config.API_URI}/api/v1/auth/refresh-token`,
+                {
+                    refreshToken: authState.refreshToken,
+                },
+                {
+                    headers: {
+                        authorization: authState.accessToken,
+                    },
+                },
+            );
+
+            dispatchAuth &&
+                dispatchAuth({
+                    type: 'SET_ACCESS',
+                    payload: {
+                        accessToken: res.headers['authorization'],
+                        accessExpiresIn: res.headers['x-access-expiry-time'],
+                    },
+                });
+        }
+        await axios.put(
+            `${config.API_URI}/api/v1/annotation/${currentAnnotation?._id}`,
+            {
+                annotations: entries,
+                comment,
+            },
+            {
+                headers: {
+                    authorization: authState?.accessToken,
+                },
+            },
+        );
+
         const newAnnotations = annotationsState.annotations.filter((a) => a._id !== currentAnnotation?._id);
         const newAnnotationId = newAnnotations.length ? newAnnotations[0]._id : '';
         dispatch &&

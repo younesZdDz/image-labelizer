@@ -7,8 +7,7 @@ const reducer: Reducer<AnnotationsState, AnnotationsAction> = (
     switch (action.type) {
         case 'SET':
             return {
-                currentAnnotationId: action.payload.currentAnnotationId,
-                annotations: [...action.payload.annotations],
+                ...action.payload,
             };
         case 'SET_ANNOTATIONS':
             return {

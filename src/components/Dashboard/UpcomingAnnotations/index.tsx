@@ -7,9 +7,11 @@ import { withStyles } from '@material-ui/styles';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import axios from 'axios';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { DateTime } from 'luxon';
 import { DispatchContext } from '../../../contexts/annotations.context';
 import { AnnotationType } from '../../../types';
 import config from '../../../config';
+import { AuthContext, SetAuthContext } from '../../../contexts/auth.context';
 
 const styles = createStyles({
     root: {
@@ -36,6 +38,9 @@ interface Props {
     upcomingAnnotations: AnnotationType[];
 }
 const UpcomingAnnotations: React.FC<Props & WithStyles<typeof styles>> = ({ classes, upcomingAnnotations }) => {
+    const authState = useContext(AuthContext);
+    const dispatchAuth = useContext(SetAuthContext);
+
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const dispatch = useContext(DispatchContext);
@@ -49,7 +54,50 @@ const UpcomingAnnotations: React.FC<Props & WithStyles<typeof styles>> = ({ clas
             });
     };
     const fetchNextData = async () => {
-        const res = await axios.get(`${config.API_URI}/api/v1/annotation/status/pending/${page}`);
+        if (authState?.refreshToken && authState?.refreshExpiresIn - DateTime.local().toSeconds() < 0) {
+            await axios.put(
+                `${config.API_URI}/api/v1/auth/logout`,
+                {
+                    refreshToken: authState.refreshToken,
+                },
+                {
+                    headers: {
+                        authorization: authState.accessToken,
+                    },
+                },
+            );
+
+            dispatchAuth &&
+                dispatchAuth({
+                    type: 'RESET',
+                });
+        } else if (authState?.accessToken && authState?.accessExpiresIn - DateTime.local().toSeconds() < 0) {
+            const res = await axios.put(
+                `${config.API_URI}/api/v1/auth/refresh-token`,
+                {
+                    refreshToken: authState.refreshToken,
+                },
+                {
+                    headers: {
+                        authorization: authState.accessToken,
+                    },
+                },
+            );
+
+            dispatchAuth &&
+                dispatchAuth({
+                    type: 'SET_ACCESS',
+                    payload: {
+                        accessToken: res.headers['authorization'],
+                        accessExpiresIn: res.headers['x-access-expiry-time'],
+                    },
+                });
+        }
+        const res = await axios.get(`${config.API_URI}/api/v1/annotation/status/pending/${page}`, {
+            headers: {
+                authorization: authState?.accessToken,
+            },
+        });
         const annotations = res?.data || [];
         if (annotations.length === 0) {
             return setHasMore(false);

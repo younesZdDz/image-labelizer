@@ -7,6 +7,7 @@ import NotFound from './components/NotFound';
 import errorImage from './assets/500.svg';
 import './App.css';
 import Dashboard from './components/Dashboard';
+import Login from './components/Login';
 
 const App: React.FC = () => {
     return (
@@ -17,6 +18,21 @@ const App: React.FC = () => {
                         <Switch location={location}>
                             <Route
                                 exact
+                                path="/auth"
+                                render={() => (
+                                    <Page
+                                        title="Image-labelizer login"
+                                        description="Image-labelizer login"
+                                        fallback={<Loading />}
+                                        errorImage={errorImage}
+                                        requireLogin={false}
+                                    >
+                                        <Login />
+                                    </Page>
+                                )}
+                            />
+                            <Route
+                                exact
                                 path="/"
                                 render={() => (
                                     <Page
@@ -24,7 +40,7 @@ const App: React.FC = () => {
                                         description="Image-labelizer dashboard"
                                         fallback={<Loading />}
                                         errorImage={errorImage}
-                                        requireLogin={false}
+                                        requireLogin={true}
                                     >
                                         <Dashboard />
                                     </Page>
