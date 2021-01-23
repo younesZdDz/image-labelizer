@@ -1,28 +1,48 @@
-import { AuthState, AuthAction, Reducer } from '../types';
+import {
+    LOGIN_REQUEST,
+    LOGIN_SUCCESS,
+    LOGIN_FAILURE,
+    LOGOUT_SUCCESS,
+    LOGOUT_REQUEST,
+    AuthState,
+    AuthAction,
+} from '../types';
 
-const defaultState = {
-    accessToken: '',
-    refreshToken: '',
-    accessExpiresIn: 0,
-    refreshExpiresIn: 0,
+const defaultState: AuthState = {
+    isFetching: false,
+    isAuthenticated: localStorage.getItem('access_token') ? true : false,
 };
-const reducer: Reducer<AuthState, AuthAction> = (state: AuthState, action: AuthAction): AuthState => {
+
+const authReducer: (state: AuthState, action: AuthAction) => AuthState = (state = defaultState, action: AuthAction) => {
     switch (action.type) {
-        case 'SET':
+        case LOGIN_REQUEST:
+            return { isFetching: true, isAuthenticated: false };
+        case LOGIN_SUCCESS:
             return {
-                ...action.payload,
+                isFetching: false,
+                isAuthenticated: true,
             };
-        case 'RESET':
-            return { ...defaultState };
-        case 'SET_ACCESS':
+        case LOGIN_FAILURE:
+            return {
+                isFetching: false,
+                isAuthenticated: false,
+                errorMessage: action.payload,
+            };
+        case LOGOUT_REQUEST:
             return {
                 ...state,
-                accessToken: action.payload.accessToken,
-                accessExpiresIn: action.payload.accessExpiresIn,
+                isFetching: true,
+                isAuthenticated: false,
+            };
+        case LOGOUT_SUCCESS:
+            return {
+                ...state,
+                isFetching: false,
+                isAuthenticated: false,
             };
         default:
             return state;
     }
 };
 
-export default reducer;
+export default authReducer;

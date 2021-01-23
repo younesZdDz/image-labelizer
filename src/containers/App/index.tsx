@@ -1,13 +1,13 @@
 import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
-import Page from './components/Page';
-import Loading from './components/Loading';
-import NotFound from './components/NotFound';
-import errorImage from './assets/500.svg';
-import './App.css';
-import Dashboard from './components/Dashboard';
-import Login from './components/Login';
+import Page from '../Page';
+import Loading from '../../components/Loading';
+import NotFound from '../../components/NotFound';
+import './styles.css';
+import Dashboard from '../Dashboard';
+import Login from '../Login';
+import errorImage from '../../assets/500.svg';
 
 const App: React.FC = () => {
     return (

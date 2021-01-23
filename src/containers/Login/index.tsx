@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -8,48 +8,21 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import Copyright from './Copyright';
+import Copyright from '../../components/Copyright';
 import { FormHelperText } from '@material-ui/core';
-import axios from 'axios';
 import Snackbar from '@material-ui/core/Snackbar';
 import { Formik } from 'formik';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
-import config from '../../config';
-import { AuthContext, SetAuthContext } from '../../contexts/auth.context';
 import { Redirect } from 'react-router-dom';
 import * as Yup from 'yup';
-import useInputState from '../../hooks/useInputState';
+import { connect, ConnectedProps } from 'react-redux';
+import { loginUser } from '../../actions/auth.action';
+import { SystemState } from '../../types';
 
-const LoginSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid email').lowercase().trim().required('Required'),
-    password: Yup.string().min(8).max(16).required('Required').trim(),
-});
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        marginTop: theme.spacing(8),
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-    },
-    avatar: {
-        margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main,
-    },
-    form: {
-        width: '100%', // Fix IE 11 issue.
-        marginTop: theme.spacing(1),
-    },
-    submit: {
-        margin: theme.spacing(3, 0, 2),
-    },
-}));
-const Login: React.FC = () => {
-    const authState = useContext(AuthContext);
-    const [responseError, setResponseError] = useState('');
-    const dispatch = useContext(SetAuthContext);
+const Login: React.FC<PropsFromRedux> = ({ isAuthenticated, loginUser, errorMessage }) => {
     const classes = useStyles();
 
-    if (authState?.accessToken) {
+    if (isAuthenticated) {
         return <Redirect to="/" />;
     }
 
@@ -69,32 +42,11 @@ const Login: React.FC = () => {
                         validateOnBlur={false}
                         initialValues={{ email: '', password: '' }}
                         validationSchema={LoginSchema}
-                        onSubmit={async (
-                            values: { email: string; password: string },
-                            { setSubmitting }: { setSubmitting: (v: boolean) => void },
-                        ) => {
-                            setSubmitting(true);
-                            try {
-                                const result = await axios.post(`${config.API_URI}/api/v1/auth/login`, {
-                                    email: values.email,
-                                    password: values.password,
-                                });
-                                dispatch &&
-                                    dispatch({
-                                        type: 'SET',
-                                        payload: {
-                                            accessToken: result.headers['authorization'],
-                                            refreshToken: result.headers['x-refresh-token'],
-                                            accessExpiresIn: result.headers['x-access-expiry-time'],
-                                            refreshExpiresIn: result.headers['x-refresh-expiry-time'],
-                                        },
-                                    });
-                                setSubmitting(false);
-                            } catch (err) {
-                                if (err?.response?.data?.code === 401) {
-                                    setResponseError(err?.response?.data?.message);
-                                }
-                            }
+                        onSubmit={async (values: { email: string; password: string }) => {
+                            loginUser({
+                                email: values.email,
+                                password: values.password,
+                            });
                         }}
                     >
                         {({ values, errors, touched, handleChange, handleSubmit }) => (
@@ -129,7 +81,7 @@ const Login: React.FC = () => {
                                     error={touched.password && errors.password !== undefined}
                                     helperText={errors.password}
                                 />
-                                <FormHelperText error={true}>{responseError}</FormHelperText>
+                                <FormHelperText error={true}>{errorMessage}</FormHelperText>
 
                                 <Button
                                     type="submit"
@@ -158,4 +110,45 @@ const Login: React.FC = () => {
     );
 };
 
-export default Login;
+const LoginSchema = Yup.object().shape({
+    email: Yup.string().email('Invalid email').lowercase().trim().required('Required'),
+    password: Yup.string().min(8).max(16).required('Required').trim(),
+});
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        marginTop: theme.spacing(8),
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    avatar: {
+        margin: theme.spacing(1),
+        backgroundColor: theme.palette.secondary.main,
+    },
+    form: {
+        width: '100%', // Fix IE 11 issue.
+        marginTop: theme.spacing(1),
+    },
+    submit: {
+        margin: theme.spacing(3, 0, 2),
+    },
+}));
+
+function mapStateToProps(state: SystemState) {
+    const {
+        auth: { isAuthenticated, errorMessage },
+    } = state;
+
+    return {
+        isAuthenticated,
+        errorMessage,
+    };
+}
+const mapDispatchToProps = (dispatch: any) => {
+    return {
+        loginUser: (creds: { email: string; password: string }) => dispatch(loginUser(creds)),
+    };
+};
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type PropsFromRedux = ConnectedProps<typeof connector>;
+export default connector(Login);

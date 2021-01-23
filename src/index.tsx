@@ -1,19 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import { AnnotationsProvider } from './contexts/annotations.context';
-import { AuthProvider } from './contexts/auth.context';
+import { Provider } from 'react-redux';
+import App from './containers/App';
+import store from './configStore';
+
+const rootElement = document.getElementById('root');
 
 ReactDOM.render(
-    <BrowserRouter>
-        <React.StrictMode>
-            <AuthProvider>
-                <AnnotationsProvider>
-                    <App />
-                </AnnotationsProvider>
-            </AuthProvider>
-        </React.StrictMode>
-    </BrowserRouter>,
-    document.getElementById('root'),
+    <React.StrictMode>
+        <Provider store={store}>
+            <BrowserRouter>
+                <App />
+            </BrowserRouter>
+        </Provider>
+    </React.StrictMode>,
+    rootElement,
 );
