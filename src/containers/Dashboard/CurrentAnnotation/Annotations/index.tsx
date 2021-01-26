@@ -5,26 +5,6 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/styles';
 import { EntryType } from 'react-bbox-annotator';
 
-const styles = createStyles({
-    root: {
-        width: '90%',
-        padding: '1rem',
-        marginTop: '2rem',
-        maxHeight: '60vh',
-        overflow: 'auto',
-    },
-    boldText: {
-        fontWeight: 'bold',
-    },
-    entry: {
-        padding: '1rem',
-        border: '1px solid #d6d0d0',
-    },
-});
-
-interface Props {
-    entries: EntryType[];
-}
 const Annotations: React.FC<Props & WithStyles<typeof styles>> = ({ classes, entries }) => {
     return entries.length ? (
         <Card className={classes.root}>
@@ -62,5 +42,23 @@ const Annotations: React.FC<Props & WithStyles<typeof styles>> = ({ classes, ent
         </Card>
     ) : null;
 };
-
+interface Props {
+    entries: EntryType[];
+}
+const styles = createStyles({
+    root: {
+        width: '90%',
+        padding: '1rem',
+        marginTop: '2rem',
+        maxHeight: '60vh',
+        overflow: 'auto',
+    },
+    boldText: {
+        fontWeight: 'bold',
+    },
+    entry: {
+        padding: '1rem',
+        border: '1px solid #d6d0d0',
+    },
+});
 export default withStyles(styles)(Annotations);

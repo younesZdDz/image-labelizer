@@ -5,11 +5,13 @@ import Typography from '@material-ui/core/Typography';
 import { WithStyles } from '@material-ui/core';
 import { withStyles } from '@material-ui/styles';
 import Button from '@material-ui/core/Button';
-import styles from './styles';
-import { logoutUser } from '../../../actions/auth.action';
-import { connect, ConnectedProps } from 'react-redux';
+import { logout } from '../../../reduxSlices/auth';
+import { useDispatch } from 'react-redux';
 
-const NavBar: React.FC<PropsFromRedux & WithStyles<typeof styles>> = ({ logoutUser, classes }) => {
+import styles from './styles';
+
+const NavBar: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+    const dispatch = useDispatch();
     return (
         <div className={classes.root}>
             <AppBar position="static">
@@ -17,7 +19,7 @@ const NavBar: React.FC<PropsFromRedux & WithStyles<typeof styles>> = ({ logoutUs
                     <Typography variant="h6" className={classes.title}>
                         Image labelizer
                     </Typography>
-                    <Button onClick={logoutUser} color="inherit">
+                    <Button onClick={() => dispatch(logout())} color="inherit">
                         Logout
                     </Button>
                 </Toolbar>
@@ -26,11 +28,5 @@ const NavBar: React.FC<PropsFromRedux & WithStyles<typeof styles>> = ({ logoutUs
     );
     return <></>;
 };
-const mapDispatchToProps = (dispatch: any) => {
-    return {
-        logoutUser: () => dispatch(logoutUser()),
-    };
-};
-const connector = connect(null, mapDispatchToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
-export default connector(withStyles(styles)(NavBar));
+
+export default withStyles(styles)(NavBar);
