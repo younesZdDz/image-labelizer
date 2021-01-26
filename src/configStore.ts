@@ -1,10 +1,17 @@
-import { createStore, applyMiddleware } from 'redux';
-import reducers from './reducers';
-import thunkMiddleware from 'redux-thunk';
-import api from './api';
+import { combineReducers, configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
+import annotationsReducer from './reduxSlices/annotations';
+import authReducer from './reduxSlices/auth';
 
-const createStoreWithMiddleware = applyMiddleware(thunkMiddleware, api)(createStore);
+const rootReducer = combineReducers({
+    auth: authReducer,
+    annotations: annotationsReducer,
+});
 
-const store = createStoreWithMiddleware(reducers);
+export type RootState = ReturnType<typeof rootReducer>;
+export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, Action<string>>;
+
+export const store = configureStore({
+    reducer: rootReducer,
+});
 
 export default store;

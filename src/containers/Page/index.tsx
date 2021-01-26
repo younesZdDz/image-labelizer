@@ -1,12 +1,12 @@
 import React, { Suspense } from 'react';
 import Helmet from 'react-helmet';
 import { Redirect } from 'react-router-dom';
-import { connect, ConnectedProps } from 'react-redux';
 import ErrorBoundary from '../../components/ErrorBoundary';
-import { SystemState } from '../../types';
+import { useSelector } from 'react-redux';
+import { selectIsAuthenticated, selectStatus } from '../../reduxSlices/auth';
 import './style.css';
 
-const Page: React.FC<Props & PropsFromRedux> = ({
+const Page: React.FC<Props> = ({
     title,
     description,
     errorImage,
@@ -14,28 +14,29 @@ const Page: React.FC<Props & PropsFromRedux> = ({
     requireLogin,
 
     children,
-
-    isAuthenticated,
-    isFetching,
 }) => {
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+    const status = useSelector(selectStatus);
+
     if (requireLogin && !isAuthenticated) {
         return <Redirect to="/auth" />;
     }
-    const content = isFetching ? (
-        [fallback]
-    ) : (
-        <>
-            <Helmet>
-                <title>{title}</title>
-                <meta name="description" content={description} />
-            </Helmet>
-            <ErrorBoundary errorImage={errorImage}>
-                <Suspense fallback={fallback}>
-                    <section className="section">{children}</section>
-                </Suspense>
-            </ErrorBoundary>
-        </>
-    );
+    const content =
+        status === 'loading' ? (
+            [fallback]
+        ) : (
+            <>
+                <Helmet>
+                    <title>{title}</title>
+                    <meta name="description" content={description} />
+                </Helmet>
+                <ErrorBoundary errorImage={errorImage}>
+                    <Suspense fallback={fallback}>
+                        <section className="section">{children}</section>
+                    </Suspense>
+                </ErrorBoundary>
+            </>
+        );
 
     return <div className="page">{content}</div>;
 };
@@ -48,16 +49,5 @@ interface Props {
 
     children: React.ReactNode;
 }
-function mapStateToProps(state: SystemState) {
-    const {
-        auth: { isAuthenticated, isFetching },
-    } = state;
 
-    return {
-        isAuthenticated,
-        isFetching,
-    };
-}
-const connector = connect(mapStateToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
-export default connector(Page);
+export default Page;

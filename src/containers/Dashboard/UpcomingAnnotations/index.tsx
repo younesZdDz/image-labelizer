@@ -6,27 +6,22 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/styles';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { connect, ConnectedProps } from 'react-redux';
-import { AnnotationType, SystemState } from '../../../types';
-import { fetchAnnotations, setCurrentAnnotationId } from '../../../actions/annotations.action';
-
-const UpcomingAnnotations: React.FC<PropsFromRedux & WithStyles<typeof styles>> = ({
-    annotations,
-    currentAnnotationId,
-    hasMore,
-    nextPage,
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    AnnotationType,
+    asyncFetchAnnotations,
     setCurrentAnnotationId,
-    fetchAnnotations,
-    classes,
-}) => {
-    const upcomingAnnotations = annotations.filter((annotation) => annotation._id !== currentAnnotationId);
+    selectHasMore,
+} from '../../../reduxSlices/annotations';
 
-    const handleClick = (annotation: AnnotationType) => {
-        const newCurrentAnnotationId = annotation._id;
-        setCurrentAnnotationId(newCurrentAnnotationId);
+const UpcomingAnnotations: React.FC<Props & WithStyles<typeof styles>> = ({ upcomingAnnotations, classes }) => {
+    const dispatch = useDispatch();
+    const hasMore = useSelector(selectHasMore);
+    const handleClick = (annotationId: string) => {
+        dispatch(setCurrentAnnotationId(annotationId));
     };
     const fetchNextData = async () => {
-        fetchAnnotations(nextPage);
+        dispatch(asyncFetchAnnotations());
     };
     return (
         <Card id="scrollElement" className={classes.root}>
@@ -44,7 +39,7 @@ const UpcomingAnnotations: React.FC<PropsFromRedux & WithStyles<typeof styles>> 
                     {upcomingAnnotations.map((annotation) => {
                         return (
                             <div
-                                onClick={() => handleClick(annotation)}
+                                onClick={() => handleClick(annotation._id)}
                                 className={classes.upcomingAnnotation}
                                 key={annotation._id}
                                 id={annotation._id}
@@ -79,25 +74,9 @@ const styles = createStyles({
         width: '100%',
     },
 });
-function mapStateToProps(state: SystemState) {
-    const {
-        annotations: { annotations, currentAnnotationId, hasMore, nextPage },
-    } = state;
 
-    return {
-        annotations,
-        currentAnnotationId,
-        hasMore,
-        nextPage,
-    };
-}
-const mapDispatchToProps = (dispatch: any) => {
-    return {
-        setCurrentAnnotationId: (currentAnnotationId: string) => dispatch(setCurrentAnnotationId(currentAnnotationId)),
-        fetchAnnotations: (nextPage: number) => dispatch(fetchAnnotations(nextPage)),
-    };
+type Props = {
+    upcomingAnnotations: AnnotationType[];
 };
-const connector = connect(mapStateToProps, mapDispatchToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
 
-export default connector(withStyles(styles)(UpcomingAnnotations));
+export default withStyles(styles)(UpcomingAnnotations);

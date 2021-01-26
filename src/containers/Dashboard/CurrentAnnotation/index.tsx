@@ -4,33 +4,26 @@ import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import { connect, ConnectedProps } from 'react-redux';
-import { AnnotationType, SystemState } from '../../../types';
 import { Box } from '@material-ui/core';
-import { updateAnnotation } from '../../../actions/annotations.action';
-import config from '../../../config';
+import { useDispatch } from 'react-redux';
+import { AnnotationType, asyncUpdateAnnotation } from '../../../reduxSlices/annotations';
 
-type Props = {
-    currentAnnotation: AnnotationType | undefined;
-    onChange: (e: EntryType[]) => void;
-    entries: EntryType[];
-};
-
-const CurrentAnnotation: React.FC<Props & PropsFromRedux> = ({
-    currentAnnotation,
-    onChange,
-    updateAnnotation,
-    entries,
-}) => {
+const CurrentAnnotation: React.FC<Props> = ({ currentAnnotation, onChange, entries }) => {
+    const dispatch = useDispatch();
     const [comment, setComment] = useState('');
     const handleChangeComment = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setComment(e.target.value);
     };
     const handleSubmit = () => {
-        updateAnnotation(currentAnnotation?._id || '', {
-            annotations: entries,
-            comment,
-        });
+        dispatch(
+            asyncUpdateAnnotation({
+                annotationId: currentAnnotation?._id || '',
+                data: {
+                    annotations: entries,
+                    comment,
+                },
+            }),
+        );
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         bboxAnnotatorRef.current?.reset();
@@ -84,11 +77,9 @@ const CurrentAnnotation: React.FC<Props & PropsFromRedux> = ({
     return <>{content}</>;
 };
 
-const mapDispatchToProps = (dispatch: any) => {
-    return {
-        updateAnnotation: (annotationId: string, data: any) => dispatch(updateAnnotation(annotationId, data)),
-    };
+type Props = {
+    currentAnnotation: AnnotationType | undefined;
+    onChange: (e: EntryType[]) => void;
+    entries: EntryType[];
 };
-const connector = connect(null, mapDispatchToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
-export default connector(CurrentAnnotation);
+export default CurrentAnnotation;

@@ -15,11 +15,13 @@ import { Formik } from 'formik';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
 import { Redirect } from 'react-router-dom';
 import * as Yup from 'yup';
-import { connect, ConnectedProps } from 'react-redux';
-import { loginUser } from '../../actions/auth.action';
-import { SystemState } from '../../types';
+import { useSelector, useDispatch } from 'react-redux';
+import { asyncLoginUser, selectIsAuthenticated, selectErrorMessage } from '../../reduxSlices/auth';
 
-const Login: React.FC<PropsFromRedux> = ({ isAuthenticated, loginUser, errorMessage }) => {
+const Login: React.FC = () => {
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+    const errorMessage = useSelector(selectErrorMessage);
+    const dispatch = useDispatch();
     const classes = useStyles();
 
     if (isAuthenticated) {
@@ -43,10 +45,12 @@ const Login: React.FC<PropsFromRedux> = ({ isAuthenticated, loginUser, errorMess
                         initialValues={{ email: '', password: '' }}
                         validationSchema={LoginSchema}
                         onSubmit={async (values: { email: string; password: string }) => {
-                            loginUser({
-                                email: values.email,
-                                password: values.password,
-                            });
+                            dispatch(
+                                asyncLoginUser({
+                                    email: values.email,
+                                    password: values.password,
+                                }),
+                            );
                         }}
                     >
                         {({ values, errors, touched, handleChange, handleSubmit }) => (
@@ -134,21 +138,4 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-function mapStateToProps(state: SystemState) {
-    const {
-        auth: { isAuthenticated, errorMessage },
-    } = state;
-
-    return {
-        isAuthenticated,
-        errorMessage,
-    };
-}
-const mapDispatchToProps = (dispatch: any) => {
-    return {
-        loginUser: (creds: { email: string; password: string }) => dispatch(loginUser(creds)),
-    };
-};
-const connector = connect(mapStateToProps, mapDispatchToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
-export default connector(Login);
+export default Login;
